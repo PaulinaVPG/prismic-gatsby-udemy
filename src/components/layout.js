@@ -7,39 +7,114 @@
 
 import React from "react"
 import PropTypes from "prop-types"
-import { useStaticQuery, graphql } from "gatsby"
-
-import Header from "./header"
+import { StaticQuery, graphql, Link } from "gatsby"
 import "./layout.css"
+import styled from "styled-components"
 
-const Layout = ({ children }) => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          title
+const Main = styled.main`
+  margin 0 auto;
+`
+
+const navigationQuery = graphql`
+  {
+    prismic {
+      allNavigations {
+        edges {
+          node {
+            branding
+            navigation_links {
+              label
+              link {
+                ... on PRISMIC_Page {
+                  _meta {
+                    uid
+                  }
+                }
+                ... on PRISMIC_Contact_page {
+                  title
+                  _meta {
+                    uid
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
-  `)
+  }
+`
 
+const NavLink = styled.div`
+  margin: auto 0;
+
+  a {
+    color: white;
+    padding: 0 16px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    &:hover {
+      color: orange;
+    }
+  }
+`
+
+const Header = styled.header`
+  display: flex;
+  background: black;
+  height: 66px;
+  padding: 0 16px;
+  box-sizing: border-box;
+`
+
+const NavLinks = styled.div`
+  margin-left: auto;
+  display: flex;
+`
+const Branding = styled.div`
+  margin: auto 0;
+  
+  a{ 
+    color: orange;
+    font-weight: bold;
+    font-size: 20px:
+  }
+`
+
+const Layout = ({ children }) => {
   return (
     <>
-      <Header siteTitle={data.site.siteMetadata.title} />
-      <div
-        style={{
-          margin: `0 auto`,
-          maxWidth: 960,
-          padding: `0 1.0875rem 1.45rem`,
-        }}
-      >
-        <main>{children}</main>
-        <footer>
-          © {new Date().getFullYear()}, Built with
-          {` `}
-          <a href="https://www.gatsbyjs.org">Gatsby</a>
-        </footer>
-      </div>
+      <Header>
+        <StaticQuery
+          query={`${navigationQuery}`}
+          render={data => {
+            return (
+              <>
+                <Branding>
+                  <Link to="/">
+                    {data.prismic.allNavigations.edges[0].node.branding}
+                  </Link>
+                </Branding>
+                <NavLinks>
+                  {data.prismic.allNavigations.edges[0].node.navigation_links.map(
+                    link => {
+                      return (
+                        <NavLink key={link.link._meta.uid}>
+                          <Link to={`/${link.link._meta.uid}`}>
+                            {link.label}
+                          </Link>
+                        </NavLink>
+                      )
+                    }
+                  )}
+                </NavLinks>
+              </>
+            )
+          }}
+        />
+      </Header>
+      <Main>{children}</Main>
     </>
   )
 }
